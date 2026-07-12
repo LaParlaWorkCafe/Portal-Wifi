@@ -1,0 +1,344 @@
+/*
+  ==========================================================================
+  LA PARLA WORKCAFÉ — Portal de Wifi
+  ==========================================================================
+  Este archivo está organizado en las mismas secciones en las que pensamos
+  el sistema de diseño durante el Sprint 3:
+
+    1. Tokens de marca (brandbook)     — PRD sección 3.1
+    2. Reset y base                    — configuración general
+    3. Layout: mobile-first + desktop  — PRD sección 5.9
+    4. Componentes (tarjetas, botones) — PRD sección 5.1–5.7
+    5. Animaciones (motion)            — PRD sección 5.4
+    6. Accesibilidad                   — prefers-reduced-motion, foco visible
+
+  Si algo no coincide con el PRD, el PRD manda — este archivo debe
+  actualizarse para reflejarlo, no al revés.
+*/
+
+
+/* --------------------------------------------------------------------
+   1. TOKENS DE MARCA
+   Colores tomados directo del brandbook (PRD 3.1). No inventar tonos
+   nuevos aquí — si hace falta un color que no está, es una decisión
+   de diseño que hay que tomar explícitamente y documentar en el PRD.
+   -------------------------------------------------------------------- */
+:root {
+  --navy: #3D4E5C;        /* Azul-gris apagado — RGB 116,145,161 en su tono claro, este es el oscurecido para texto */
+  --mustard: #F9B03D;      /* Naranja/mostaza cálido — color de acción y de venta */
+  --dark: #232323;         /* Negro de marca (no #000 puro) */
+  --gray: #727070;         /* Gris medio — texto secundario */
+  --muted: #A9A79E;        /* Gris claro — texto terciario / placeholders */
+  --border: #EDEBE5;       /* Bordes y separadores suaves */
+  --error: #B0492E;        /* Terracota — SOLO para estados de error, no está en el brandbook oficial (ver PRD 5.7 nota) */
+  --white: #FFFFFF;
+  --bg: #F7F6F3;           /* Fondo detrás del portal (fuera de la tarjeta) */
+
+  --font: 'Montserrat', Arial, sans-serif;
+
+  /* Sombra suave "tipo Apple" (PRD 5.4) — nunca un shadow duro */
+  --shadow-card: 0 4px 16px rgba(61, 78, 92, 0.10);
+  --shadow-btn: 0 2px 8px rgba(61, 78, 92, 0.15);
+}
+
+
+/* --------------------------------------------------------------------
+   2. RESET Y BASE
+   -------------------------------------------------------------------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--dark);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------
+   3. LAYOUT — mobile-first, con un solo punto de quiebre a desktop.
+   PRD 5.9: la persona que paga se conecta casi siempre desde laptop,
+   así que esto no es un "extra", es tan importante como mobile.
+   -------------------------------------------------------------------- */
+#portal {
+  width: 100%;
+  max-width: 380px;               /* ancho mobile */
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px 20px;
+  box-shadow: var(--shadow-card);
+  animation: fadeIn 0.5s ease both; /* PRD 5.4: el portal aparece con fade, no de golpe */
+}
+
+@media (min-width: 768px) {
+  #portal {
+    max-width: 640px;
+    padding: 32px 40px;
+  }
+}
+
+.topbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .topbar {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+.logo-badge {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.3px;
+}
+
+.greeting {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mustard);
+}
+
+#screens { position: relative; }
+
+/* Solo la pantalla activa se muestra. script.js cambia esta clase. */
+.screen { display: none; }
+.screen--active {
+  display: block;
+  animation: fadeIn 0.4s ease both; /* PRD 5.4: transición corta y suave entre pantallas */
+}
+
+
+/* --------------------------------------------------------------------
+   4. COMPONENTES
+   -------------------------------------------------------------------- */
+
+.title {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.title--sm { font-size: 17px; }
+.center { text-align: center; }
+
+.subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.social-proof {
+  font-size: 11px;
+  color: var(--gray);
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* --- Tarjetas de la landing --- */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+@media (min-width: 768px) {
+  .cards { flex-direction: row; }
+}
+
+.card {
+  flex: 1;
+  border-radius: 16px;
+  padding: 16px;
+  animation: slideUp 0.5s ease both;
+}
+.card--outline {
+  border: 1.5px solid var(--navy);
+  animation-delay: 0.05s;
+}
+.card--solid {
+  background: var(--mustard);
+  box-shadow: 0 4px 14px rgba(249, 176, 61, 0.30);
+  animation-delay: 0.15s;
+}
+.card-icon { font-size: 20px; margin-bottom: 8px; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.card--solid .card-title { color: var(--dark); }
+.card-text { font-size: 11px; color: var(--gray); line-height: 1.5; margin-bottom: 14px; }
+.card--solid .card-text { color: #4A3B1A; }
+
+/* --- Botones ---
+   Todos comparten .btn; los modificadores definen color.
+   El slide-in de PRD 5.4 se aplica con la animación buttonIn. */
+.btn {
+  display: inline-block;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 20px;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
+  animation: buttonIn 0.4s ease both;
+  animation-delay: 0.25s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-btn); }
+.btn:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+.btn--block { width: 100%; }
+
+.btn--outline { background: var(--white); color: var(--navy); border: 1.5px solid var(--navy); }
+.btn--dark    { background: var(--dark);  color: var(--white); }
+.btn--navy    { background: var(--navy);  color: var(--white); }
+.btn--mustard { background: var(--mustard); color: var(--white); box-shadow: 0 3px 10px rgba(249,176,61,0.35); }
+
+.button-row { display: flex; gap: 8px; }
+.button-row .btn { flex: 1; }
+
+.link-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font); font-size: 11px; color: var(--muted);
+  text-decoration: underline;
+}
+.link-btn--mustard { color: var(--mustard); font-weight: 700; text-decoration: none; }
+
+/* --- Formularios --- */
+.field input, .code-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--dark);
+  margin-bottom: 10px;
+}
+.field input:focus, .code-input:focus { outline: none; border-color: var(--navy); }
+.code-input {
+  text-align: center;
+  font-size: 16px;
+  letter-spacing: 6px;
+  border: 1.5px solid var(--navy);
+  margin-bottom: 12px;
+}
+.checkbox-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--gray);
+  margin-bottom: 16px;
+}
+.checkbox-row input { width: 14px; height: 14px; }
+
+/* --- Conectado --- */
+.connected-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--mustard);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--dark);
+  margin: 0 auto 16px;
+  animation: fadeIn 0.5s ease both;
+}
+.badge {
+  display: block; width: fit-content; margin: 0 auto 18px;
+  border-radius: 9px; padding: 9px 16px;
+  font-size: 12px; font-weight: 700;
+}
+.badge--outline { border: 1.5px solid var(--navy); color: var(--navy); }
+.teaser { font-size: 10px; color: var(--muted); text-align: center; margin-bottom: 14px; }
+
+/* --- Íconos grandes (tiempo agotado / error) --- */
+.big-icon { font-size: 30px; text-align: center; margin-bottom: 12px; }
+.big-icon--error { color: var(--error); }
+
+/* --- Banner de upsell (pantalla de código) --- */
+.banner {
+  border: 1.5px solid var(--mustard);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  margin-top: 14px;
+}
+.banner-title { font-size: 11px; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+.banner-text { font-size: 10px; color: var(--gray); margin-bottom: 8px; }
+
+/* --- Precios (Conoce tu Coffee Pass) --- */
+.pricing { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+@media (min-width: 768px) { .pricing { flex-direction: row; } }
+.price-card {
+  flex: 1;
+  border: 1.5px solid var(--navy);
+  border-radius: 12px;
+  padding: 14px;
+}
+.price-card--plus { border: none; background: var(--dark); }
+.price-name { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.price-name--plus { color: var(--mustard); }
+.price-amount { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.price-amount--plus { color: var(--white); }
+.price-desc { font-size: 10px; color: var(--gray); }
+.price-desc--plus { color: #C9C9C9; }
+
+
+/* --------------------------------------------------------------------
+   5. ANIMACIONES — PRD 5.4
+   Filosofía: nada aparece de golpe, todo se desliza o aparece con fade,
+   siempre corto y sutil (nunca más de 0.5s).
+   -------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes buttonIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* --------------------------------------------------------------------
+   6. ACCESIBILIDAD
+   Alguien con "reducir movimiento" activado en su sistema no debería
+   ver ninguna de estas animaciones.
+   -------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

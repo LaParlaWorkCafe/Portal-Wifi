@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Parla WorkCafé — Wifi</title>
+
+<!--
+  Tipografía de marca (brandbook): Montserrat Bold para títulos, Montserrat Light
+  para cuerpo. Se carga desde Google Fonts porque este proyecto vive en Cloudflare
+  Pages (con internet real), a diferencia del render de referencia que hicimos
+  offline para el documento de pantallas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!--
+  ESTRUCTURA GENERAL
+  ==================
+  Cada pantalla del PRD (sección 5.7) es un <section class="screen">.
+  Solo una está visible a la vez — la clase ".screen--active" la muestra
+  (ver style.css) y script.js se encarga de cambiar cuál tiene esa clase.
+
+  Por qué así y no generando el HTML por JavaScript (como en el prototipo
+  del Sprint 4): con el HTML ya escrito, el código es más fácil de leer,
+  de inspeccionar en el navegador, y de ajustar en Cursor sin tener que
+  editar strings de texto dentro de JS.
+-->
+
+<div id="portal">
+
+  <!-- Header persistente: logo + saludo dinámico. Ver PRD 5.1 -->
+  <header class="topbar">
+    <span class="logo-badge">☕ LA PARLA WORKCAFÉ</span>
+    <span class="greeting" id="greeting"><!-- JS la llena según la hora --></span>
+  </header>
+
+  <main id="screens">
+
+    <!-- ============ 1. LANDING — PRD 5.1 ============ -->
+    <section class="screen screen--active" data-screen="landing">
+      <h1 class="title">Bienvenido a La Parla</h1>
+      <p class="subtitle">Tu oficina de hoy está lista. Trabaja cómodo. Disfruta excelente café. Nosotros nos encargamos del resto.</p>
+
+      <div class="cards">
+        <article class="card card--outline">
+          <p class="card-icon">☕</p>
+          <h2 class="card-title">Estoy de paso</h2>
+          <p class="card-text">Disfruta una hora de internet de cortesía mientras compartes un buen café.</p>
+          <button class="btn btn--outline" data-goto="guestForm">Comenzar</button>
+        </article>
+
+        <article class="card card--solid">
+          <p class="card-icon">💻</p>
+          <h2 class="card-title">Hoy vine a trabajar</h2>
+          <p class="card-text">Convierte cualquier mesa en tu oficina. Todo el café que quieras. Internet Premium. Todo el día.</p>
+          <button class="btn btn--dark" data-goto="coffeePass">Activar Coffee Pass</button>
+        </article>
+      </div>
+
+      <p class="social-proof">★★★★★ Más de 4.9 estrellas en Google</p>
+    </section>
+
+    <!-- ============ 2. GUEST — FORMULARIO — PRD 5.7 #2 ============ -->
+    <section class="screen" data-screen="guestForm">
+      <p class="eyebrow">Guest — formulario</p>
+      <h2 class="title title--sm">Wifi gratis por 1 hora</h2>
+      <p class="subtitle">Con tu wifi gratis tienes hasta 60 minutos a velocidad estándar.</p>
+
+      <form id="guestFormEl" novalidate>
+        <label class="field">
+          <span class="sr-only">Nombre</span>
+          <input type="text" name="nombre" placeholder="Nombre" required>
+        </label>
+        <label class="field">
+          <span class="sr-only">Correo</span>
+          <input type="email" name="correo" placeholder="Correo" required>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" name="terminos" required>
+          <span>Acepto los términos y condiciones</span>
+        </label>
+        <button type="submit" class="btn btn--navy btn--block">Conectarme</button>
+      </form>
+    </section>
+
+    <!-- ============ 3. CONECTADO — PRD 5.2 / 5.7 #3 ============ -->
+    <!-- Una sola pantalla, dos variantes de contenido (guest / coffeePass) -->
+    <!-- controladas por JS con la clase .is-guest / .is-coffeepass -->
+    <section class="screen" data-screen="conectado">
+      <div class="connected-icon">✓</div>
+      <h2 class="title title--sm center">Conectado</h2>
+      <p class="subtitle center">Ya puedes comenzar a trabajar. Que tengas una excelente jornada. ☕</p>
+
+      <div class="badge badge--outline" id="connectedBadge"><!-- JS: "58 min restantes" o "Internet Premium — sin límite hoy" --></div>
+
+      <p class="teaser">¿Necesitas una sala para reunirte? Próximamente</p>
+
+      <!-- Solo visible en la variante guest, para simular el paso del tiempo en demo -->
+      <button class="link-btn" id="simulateExpire" hidden>Simular: tiempo agotado →</button>
+    </section>
+
+    <!-- ============ 4. GUEST — TIEMPO AGOTADO — PRD 5.7 #4 ============ -->
+    <section class="screen" data-screen="tiempoAgotado">
+      <p class="big-icon">⏰</p>
+      <h2 class="title title--sm center">Tu tiempo gratis terminó</h2>
+      <p class="subtitle center">¿Quieres seguir sin límites hoy?</p>
+      <button class="btn btn--mustard btn--block" data-goto="coffeePass">Conocer Coffee Pass</button>
+    </section>
+
+    <!-- ============ 5. INGRESO DE CÓDIGO — PRD 5.7 #5 ============ -->
+    <section class="screen" data-screen="codigo">
+      <p class="eyebrow center">Ingreso de código</p>
+      <h2 class="title title--sm center">Ingresa tu código</h2>
+      <p class="subtitle center">El que recibiste por correo o en caja.</p>
+
+      <form id="codeFormEl" novalidate>
+        <input type="text" id="codeInput" maxlength="6" placeholder="••••••" autocomplete="off" class="code-input">
+        <button type="submit" class="btn btn--navy btn--block">Validar código</button>
+      </form>
+
+      <div class="banner">
+        <p class="banner-title">¿No tienes código todavía?</p>
+        <p class="banner-text">Café ilimitado + internet premium, todo el día.</p>
+        <button class="link-btn link-btn--mustard" data-goto="coffeePass">Comprar Coffee Pass →</button>
+      </div>
+    </section>
+
+    <!-- ============ 6. CONOCE TU COFFEE PASS — PRD 5.7 #6 / 5.5 ============ -->
+    <section class="screen" data-screen="coffeePass">
+      <p class="eyebrow center">Conoce tu Coffee Pass</p>
+      <p class="subtitle center">Café ilimitado, tu mesa todo el día e internet premium.</p>
+
+      <div class="pricing">
+        <article class="price-card">
+          <p class="price-name">Coffee Pass</p>
+          <p class="price-amount">$60.000</p>
+          <p class="price-desc">Bebidas ilimitadas + espacio + internet</p>
+        </article>
+        <article class="price-card price-card--plus">
+          <p class="price-name price-name--plus">Coffee Pass Plus</p>
+          <p class="price-amount price-amount--plus">$120.000</p>
+          <p class="price-desc price-desc--plus">Todo lo anterior + plato fuerte y postre</p>
+        </article>
+      </div>
+
+      <!--
+        TODO(integración Shopify): "Comprar Coffee Pass" debe ir al checkout
+        real de la colección "Día de trabajo" (saldría del sitio). Por ahora
+        navega a la pantalla de código para poder demostrar el flujo completo
+        sin salir del portal — por eso hoy apunta al mismo lugar que el link
+        de abajo ("¿Ya tienes tu código?"). Cuando Shopify esté conectado,
+        estos dos botones sí llevan a destinos distintos.
+      -->
+      <button class="btn btn--mustard btn--block" id="buyCoffeePassBtn" data-goto="codigo">Comprar Coffee Pass</button>
+      <button class="link-btn" style="display:block; margin:12px auto 0; text-align:center;" data-goto="codigo">¿Ya tienes tu código? Ingrésalo aquí →</button>
+    </section>
+
+    <!-- ============ 7. ERROR — PRD 5.7 #7 ============ -->
+    <section class="screen" data-screen="error">
+      <p class="big-icon big-icon--error">⚠️</p>
+      <h2 class="title title--sm center" id="errorTitle">Ese código no es válido</h2>
+      <p class="subtitle center">Verifica que esté bien escrito o que no haya sido usado antes.</p>
+      <div class="button-row">
+        <button class="btn btn--outline" data-goto="codigo">Reintentar</button>
+        <button class="btn btn--mustard" data-goto="coffeePass">Comprar</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
