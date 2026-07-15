@@ -27,8 +27,8 @@
    demo local (simulado), igual que hasta ahora — así nunca se rompe
    la demo mientras terminas de construir los webhooks reales.
    ------------------------------------------------------------------ */
-const N8N_VALIDATE_CODE_URL = ''; // ej: 'https://laparlaworkcafe.app.n8n.cloud/webhook/xxxxx'
-const N8N_GUEST_SESSION_URL = ''; // ej: 'https://laparlaworkcafe.app.n8n.cloud/webhook/yyyyy'
+const N8N_VALIDATE_CODE_URL = 'https://laparlaworkcafe.app.n8n.cloud/webhook/8d5ac6e3-e544-4435-a834-1f54a9af10f9';
+const N8N_GUEST_SESSION_URL = 'https://laparlaworkcafe.app.n8n.cloud/webhook/e70badb2-f40a-4d7b-9252-5a62f91a156f';
 
 
 /* ------------------------------------------------------------------
