@@ -17,6 +17,21 @@
 
 
 /* ------------------------------------------------------------------
+   0. CONFIGURACIÓN — URLs de los webhooks de n8n
+   Reemplaza estas dos constantes con las Production URL reales una
+   vez construyas los flujos "Coffee Pass — Validar código" y
+   "Coffee Pass — Sesión guest" en n8n (instrucciones completas en
+   n8n/SIGUIENTE-PASO-validacion.md, dentro del repositorio).
+
+   Mientras estén vacías (''), el portal sigue funcionando en modo
+   demo local (simulado), igual que hasta ahora — así nunca se rompe
+   la demo mientras terminas de construir los webhooks reales.
+   ------------------------------------------------------------------ */
+const N8N_VALIDATE_CODE_URL = ''; // ej: 'https://laparlaworkcafe.app.n8n.cloud/webhook/xxxxx'
+const N8N_GUEST_SESSION_URL = ''; // ej: 'https://laparlaworkcafe.app.n8n.cloud/webhook/yyyyy'
+
+
+/* ------------------------------------------------------------------
    1. PARÁMETROS DEL PORTAL CAUTIVO
    Cuando UniFi redirige a un dispositivo a este portal, agrega
    parámetros en la URL con información del dispositivo y del punto
@@ -99,22 +114,36 @@ document.addEventListener('click', (event) => {
    4. LÓGICA DE CADA PANTALLA
    ------------------------------------------------------------------ */
 
-/* --- Guest: formulario --- */
+/* --- Guest: formulario ---
+   Si N8N_GUEST_SESSION_URL ya está configurada, llama al webhook real
+   (que aplica el reset diario de 24h, PRD 6.6). Si no, simula
+   localmente para que la demo siga funcionando. */
 document.getElementById('guestFormEl').addEventListener('submit', (event) => {
   event.preventDefault();
 
-  // TODO(integración n8n): en vez de navegar directo, aquí se debería
-  // llamar al webhook que registra la sesión guest (tabla guest_sessions,
-  // ver PRD 6.6) y pedirle a UniFi que autorice este MAC por 1 hora.
-  // Ejemplo de la llamada real (comentada hasta que exista el endpoint):
-  //
-  // fetch('https://TU-INSTANCIA-N8N.com/webhook/guest-session', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ mac: portalParams.clientMac, sede: 'torre-126' }),
-  // }).then(...)
+  if (!N8N_GUEST_SESSION_URL) {
+    showConnected('guest'); // modo demo, sin webhook configurado todavía
+    return;
+  }
 
-  showConnected('guest');
+  fetch(N8N_GUEST_SESSION_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mac_address: portalParams.clientMac }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.valid) {
+        showConnected('guest');
+      } else {
+        // Ya usó su hora gratis en las últimas 24h — PRD 5.8
+        goToScreen('coffeePass');
+      }
+    })
+    .catch((err) => {
+      console.error('Error llamando al webhook de sesión guest:', err);
+      showConnected('guest'); // fallback: no bloquear al usuario si n8n falla
+    });
 });
 
 /* --- Conectado: dos variantes (guest / coffeePass) --- */
@@ -136,35 +165,49 @@ document.getElementById('simulateExpire').addEventListener('click', () => {
 });
 
 /* --- Ingreso de código ---
-   Validación real de ejemplo para la demo: cualquier código de 4+
-   caracteres se considera válido. Esto se reemplaza en Sprint 6 por
-   una llamada real a n8n que consulta la tabla de vouchers (PRD 6.2). */
+   Si N8N_VALIDATE_CODE_URL ya está configurada, llama al webhook real
+   (que aplica el límite de 2 dispositivos, PRD 6.8). Si no, simula
+   localmente para que la demo siga funcionando. */
 document.getElementById('codeFormEl').addEventListener('submit', (event) => {
   event.preventDefault();
   const code = document.getElementById('codeInput').value.trim();
 
-  // TODO(integración n8n): reemplazar esta validación local por:
-  //
-  // fetch(`https://TU-INSTANCIA-N8N.com/webhook/validate-code?code=${code}`)
-  //   .then((res) => res.json())
-  //   .then((data) => {
-  //     if (data.valid) { showConnected('coffeePass'); }
-  //     else { showError(data.reason); } // 'invalido' | 'usado' | 'expirado'
-  //   });
-
-  if (code.length >= 4) {
-    showConnected('coffeePass');
-  } else {
-    showError('invalido');
+  if (!N8N_VALIDATE_CODE_URL) {
+    // Modo demo: cualquier código de 4+ caracteres se considera válido
+    if (code.length >= 4) {
+      showConnected('coffeePass');
+    } else {
+      showError('invalido');
+    }
+    return;
   }
+
+  fetch(N8N_VALIDATE_CODE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ voucher: code, mac_address: portalParams.clientMac }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.valid) {
+        showConnected('coffeePass');
+      } else {
+        showError(data.reason); // 'invalido' | 'usado' | 'expirado' | 'limite_dispositivos'
+      }
+    })
+    .catch((err) => {
+      console.error('Error llamando al webhook de validación de código:', err);
+      showError('invalido');
+    });
 });
 
-/* --- Error: 3 variantes de mensaje, PRD 5.7 #7 --- */
+/* --- Error: 4 variantes de mensaje, PRD 5.7 #7 (se agregó "limite_dispositivos" el 14 jul 2026, PRD 6.8) --- */
 function showError(reason) {
   const messages = {
     invalido: 'Ese código no es válido',
     usado: 'Ese código ya fue usado',
     expirado: 'Ese código ya expiró',
+    limite_dispositivos: 'Este código ya alcanzó el máximo de dispositivos',
   };
   document.getElementById('errorTitle').textContent = messages[reason] || messages.invalido;
   goToScreen('error');
@@ -172,14 +215,17 @@ function showError(reason) {
 
 
 /* ------------------------------------------------------------------
-   5. RESUMEN DE INTEGRACIONES PENDIENTES (Sprint 6)
-   Todo lo marcado con TODO arriba depende de que exista:
-     - Un webhook de n8n para sesiones guest (registrar MAC + hora)
-     - Un webhook de n8n para validar códigos de Coffee Pass
-     - El Cloud Gateway Ultra, para que UniFi pueda autorizar
-       dispositivos por API en vez de solo mostrar el portal
-   Hasta entonces, este código funciona como demo navegable completa,
-   pero no autoriza wifi real en ningún dispositivo.
+   5. RESUMEN DE INTEGRACIONES (actualizado 14 jul 2026)
+   - Webhook de compra (Shopify → n8n → voucher → correo): CONSTRUIDO
+     y probado, ver n8n/README.md en el repositorio.
+   - Webhook de validación de código y de sesión guest: DISEÑADOS,
+     con las instrucciones completas para construirlos en
+     n8n/SIGUIENTE-PASO-validacion.md. Mientras N8N_VALIDATE_CODE_URL
+     y N8N_GUEST_SESSION_URL (arriba del todo de este archivo) sigan
+     vacías, el portal sigue funcionando en modo demo/simulado.
+   - El Cloud Gateway Ultra (para que UniFi autorice dispositivos por
+     API) sigue pendiente de compra — sin eso, ningún wifi real se
+     autoriza todavía, aunque toda esta lógica ya esté lista.
    ------------------------------------------------------------------ */
 
 // Pantalla inicial
